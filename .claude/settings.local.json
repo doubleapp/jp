@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for file in *.bat *.ps1 *.md *.txt)",
+      "Bash(do if [ -f \"$file\" ])",
+      "Bash(then wc -l \"$file\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(cd:*)",
+      "Bash(call test_e2e.bat:*)",
+      "Bash(cmd.exe /c \"cd /d e:\\\\EProjects\\\\jp && call test_e2e.bat\")",
+      "Bash(cmd.exe:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(cmd /c \"cd /d e:\\\\EProjects\\\\jp && call test_e2e.bat\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File:*)",
+      "Bash(reg query:*)",
+      "Bash(cmd /c \"reg add \"\"HKCU\\\\Software\\\\Microsoft\\\\Command Processor\"\" /v AutoRun /t REG_SZ /d \"\"\\\\\"\"C:\\\\Program Files \\(x86\\)\\\\clink\\\\clink_x64.exe\\\\\"\" inject --quiet\"\" /f\")",
+      "Bash(cmd /c \"reg query \"\"HKCU\\\\Software\\\\Microsoft\\\\Command Processor\"\" /v AutoRun\")",
+      "Bash(cmd /c \"clink info 2>&1 && echo --- && jp list 2>&1\")",
+      "Bash(cmd /c \"e:\\\\EProjects\\\\jp\\\\test_e2e.bat\")"
+    ]
+  }
+}

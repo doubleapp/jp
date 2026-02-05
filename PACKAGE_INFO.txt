@@ -1,0 +1,113 @@
+================================================================================
+JP - Directory Jumper for Windows CMD
+================================================================================
+
+Version: 1.1.0
+Release Date: 2026-02-05
+Package Location: e:\EProjects\jp\
+
+================================================================================
+PACKAGE CONTENTS
+================================================================================
+
+CORE FILES:
+  jp.bat              - Main directory jumper script (batch version)
+  jp.ps1              - PowerShell version with tab completion
+  jp_clink.lua        - Clink TAB completion script for CMD
+  install.bat         - Automated installation script (batch version)
+  install-powershell.bat - Automated installation script (PowerShell version)
+  uninstall.bat       - Automated uninstallation script
+
+CONFIGURATION:
+  cmd_shortcuts.bat   - Template for static directory aliases (1.4 KB)
+
+DOCUMENTATION:
+  README.md           - Complete documentation (4.6 KB)
+  QUICKSTART.md       - Quick start guide for new users (1.3 KB)
+  EXAMPLES.md         - Real-world usage examples (4.5 KB)
+  CHANGELOG.md        - Version history and future plans (1.7 KB)
+  LICENSE.txt         - MIT License (1.1 KB)
+  PACKAGE_INFO.txt    - This file
+
+================================================================================
+QUICK INSTALLATION
+================================================================================
+
+1. Run: install.bat
+2. Close and reopen CMD
+3. Run: jp add myproject C:\path\to\project
+4. Run: jp myproject
+
+================================================================================
+FEATURES
+================================================================================
+
+✓ Add directory shortcuts with custom names
+✓ Jump to directories instantly across different drives
+✓ Automatic cross-drive detection (C: → E:, etc.)
+✓ Visual feedback when switching between drives
+✓ List all saved shortcuts
+✓ Remove shortcuts when no longer needed
+✓ Persistent storage across sessions
+✓ Error handling for inaccessible directories
+✓ TAB completion in CMD (via Clink) and PowerShell (built-in)
+✓ No dependencies or admin rights required
+✓ Works on Windows 7 and later
+✓ Supports paths with spaces
+✓ Case-insensitive shortcut names
+
+================================================================================
+SYSTEM REQUIREMENTS
+================================================================================
+
+- Operating System: Windows 7 or later
+- Shell: Command Prompt (cmd.exe)
+- Disk Space: < 100 KB
+- Permissions: User-level (no admin required)
+- Dependencies: None
+
+================================================================================
+FILE SIZES
+================================================================================
+
+Total Package Size: ~20 KB
+Installation Size: ~5 KB (jp.bat + shortcuts file)
+
+================================================================================
+INSTALLATION LOCATIONS
+================================================================================
+
+After installation, files will be located at:
+
+- Program: %USERPROFILE%\bin\jp.bat
+- Shortcuts: %USERPROFILE%\.jump_directories
+- Aliases (optional): %USERPROFILE%\cmd_shortcuts.bat
+
+================================================================================
+SUPPORT & DOCUMENTATION
+================================================================================
+
+For detailed information, see:
+- README.md - Full documentation
+- QUICKSTART.md - Get started in 2 minutes
+- EXAMPLES.md - Real-world usage scenarios
+
+For issues or questions:
+- Check troubleshooting section in README.md
+- Review EXAMPLES.md for usage patterns
+
+================================================================================
+LICENSE
+================================================================================
+
+MIT License - Free to use, modify, and distribute
+See LICENSE.txt for full details
+
+================================================================================
+CREATED WITH
+================================================================================
+
+Claude Code - AI-assisted development tool
+Anthropic, 2026
+
+================================================================================
