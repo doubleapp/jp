@@ -233,15 +233,15 @@ Jumped back to: C:\Users\Me\Documents
 
 ## License
 
-Free to use, modify, and distribute. No warranty provided.
+Apache License 2.0 - Copyright 2026 Amir Gur. See [LICENSE.txt](LICENSE.txt) for details.
 
 ## Contributing
 
-Found a bug? Have a feature request? This is a simple batch script - feel free to modify it to suit your needs!
+Found a bug? Have a feature request? Feel free to modify and enhance!
 
 ## Author
 
-Created as a productivity tool for developers who work with multiple projects.
+Created by Amir Gur as a productivity tool for developers who work with multiple projects.
 
 ---
 

@@ -31,13 +31,18 @@ if not exist "%INSTALL_DIR%" (
 )
 
 echo.
-echo [Step 2] Copying jp.ps1...
+echo [Step 2] Copying jp.ps1 and jp-completion.ps1...
 copy /Y "%SCRIPT_DIR%jp.ps1" "%INSTALL_DIR%\jp.ps1" >nul
 if errorlevel 1 (
     echo   ERROR: Failed to copy jp.ps1
     goto :error
 )
-echo   Copied: jp.ps1 to %INSTALL_DIR%
+copy /Y "%SCRIPT_DIR%jp-completion.ps1" "%INSTALL_DIR%\jp-completion.ps1" >nul
+if errorlevel 1 (
+    echo   ERROR: Failed to copy jp-completion.ps1
+    goto :error
+)
+echo   Copied: jp.ps1 and jp-completion.ps1 to %INSTALL_DIR%
 
 echo.
 echo [Step 3] Creating jp.cmd wrapper...
@@ -53,7 +58,7 @@ powershell -ExecutionPolicy Bypass -Command "$userPath = [Environment]::GetEnvir
 
 echo.
 echo [Step 5] Setting up PowerShell profile for tab completion...
-powershell -ExecutionPolicy Bypass -Command "$profileDir = Split-Path $PROFILE; if (-not (Test-Path $profileDir)) { New-Item -ItemType Directory -Path $profileDir -Force | Out-Null }; $jpImport = \"`n# JP Directory Jumper Tab Completion`n. '%INSTALL_DIR%\jp.ps1' -Command dummy 2>`$null`n\"; if (Test-Path $PROFILE) { $content = Get-Content $PROFILE -Raw; if ($content -notlike '*jp.ps1*') { Add-Content $PROFILE $jpImport; Write-Host '  Added tab completion to PowerShell profile' } else { Write-Host '  Tab completion already in profile' } } else { Set-Content $PROFILE $jpImport; Write-Host '  Created PowerShell profile with tab completion' }"
+powershell -ExecutionPolicy Bypass -Command "$profileDir = Split-Path $PROFILE; if (-not (Test-Path $profileDir)) { New-Item -ItemType Directory -Path $profileDir -Force | Out-Null }; $jpImport = \"`n# JP Directory Jumper - function and tab completion`n. '%INSTALL_DIR%\jp-completion.ps1'`n\"; if (Test-Path $PROFILE) { $content = Get-Content $PROFILE -Raw; if ($content -like '*jp-completion.ps1*') { Write-Host '  Tab completion already in profile' } elseif ($content -like '*jp.ps1*') { $content = $content -replace '(?m)^.*jp\.ps1.*$', ('. ''%INSTALL_DIR%\jp-completion.ps1'''); Set-Content $PROFILE $content; Write-Host '  Updated profile to use jp-completion.ps1' } else { Add-Content $PROFILE $jpImport; Write-Host '  Added tab completion to PowerShell profile' } } else { Set-Content $PROFILE $jpImport; Write-Host '  Created PowerShell profile with tab completion' }"
 
 echo.
 echo ============================================================================

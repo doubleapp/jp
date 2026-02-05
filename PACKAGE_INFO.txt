@@ -26,7 +26,7 @@ DOCUMENTATION:
   QUICKSTART.md       - Quick start guide for new users (1.3 KB)
   EXAMPLES.md         - Real-world usage examples (4.5 KB)
   CHANGELOG.md        - Version history and future plans (1.7 KB)
-  LICENSE.txt         - MIT License (1.1 KB)
+  LICENSE.txt         - Apache License 2.0
   PACKAGE_INFO.txt    - This file
 
 ================================================================================
@@ -100,7 +100,7 @@ For issues or questions:
 LICENSE
 ================================================================================
 
-MIT License - Free to use, modify, and distribute
+Apache License 2.0 - Free to use, modify, and distribute with attribution
 See LICENSE.txt for full details
 
 ================================================================================

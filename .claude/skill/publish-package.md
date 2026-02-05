@@ -4,7 +4,7 @@
 
 ## Overview
 
-This skill handles versioning and publishing JP to GitHub Releases, Scoop, and WinGet.
+This skill handles versioning and publishing JP to GitHub Releases and Scoop.
 
 ## Version Bumping Rules
 
@@ -39,7 +39,7 @@ Evaluate the changes and apply the **highest applicable** bump:
 - Added `jp clean` command → **minor**
 - Fixed cross-drive detection bug → **patch**
 - Renamed `jp remove` to `jp delete` → **major**
-- Added WinGet publishing support → **minor**
+- Added Scoop publishing support → **minor**
 - Updated README typo → **patch**
 - Changed shortcut file format from `name=path` to JSON → **major**
 
@@ -92,41 +92,37 @@ Before running publish, add a new section to CHANGELOG.md:
 # Or publish to specific target
 .\publish.ps1 -Target github -BumpType minor
 .\publish.ps1 -Target scoop
-.\publish.ps1 -Target winget
 ```
 
 ### 4. Post-publish
 
-- Tag the commit: `git tag v<version>` (done automatically by `gh release create`)
-- Push the tag: `git push origin v<version>`
-- For Scoop: copy `dist/jp.json` to the scoop bucket repo
-- For WinGet: submit `dist/winget/` manifests to microsoft/winget-pkgs
+- Tag + push is done automatically by publish.ps1 (triggers SSH passphrase prompt)
+- Upload the zip to the GitHub release page (opens in browser automatically)
+- Scoop bucket is updated automatically (pushed to doubleapp/jp-scoop-bucket)
 
 ## Files
 
 | File | Purpose |
 |------|---------|
 | `version.txt` | Single source of truth for current version |
-| `publish.ps1` | Main publish script (build, release, manifests) |
+| `publish.ps1` | Main publish script (build, release, Scoop) |
 | `install-remote.bat` | One-command installer for end users |
 | `dist/` | Output directory (git-ignored) |
 | `dist/jp-X.Y.Z.zip` | Release zip archive |
 | `dist/jp.json` | Scoop manifest |
-| `dist/winget/` | WinGet manifest files |
 
 ## Target Details
 
 ### GitHub Release
-- Creates a tagged release with the zip as an asset
-- Release notes extracted from CHANGELOG.md
-- Requires: `gh` CLI authenticated
+- Creates a git tag, pushes via SSH (prompts for passphrase)
+- Opens GitHub release page in browser for zip upload
+- Release notes from CHANGELOG.md copied to clipboard
+- Requires: git with SSH key configured
 
 ### Scoop
 - Generates `jp.json` manifest with SHA256 hash
-- Needs a separate bucket repo (e.g., `doubleapp/jp-scoop-bucket`)
-- Users install: `scoop bucket add jp <bucket-url> && scoop install jp`
+- Auto-pushes to `doubleapp/jp-scoop-bucket` repo
+- Users install: `scoop bucket add jp https://github.com/doubleapp/jp-scoop-bucket && scoop install jp`
 
-### WinGet
-- Generates three YAML manifests (version, locale, installer)
-- Submit via PR to `microsoft/winget-pkgs`
-- Users install: `winget install doubleapp.jp`
+### WinGet (not supported)
+WinGet requires MSI/EXE installers. JP is a pure script tool so WinGet is not applicable.

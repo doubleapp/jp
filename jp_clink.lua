@@ -34,11 +34,14 @@ local function read_shortcut_names()
     return names
 end
 
+local shortcut_generator = function ()
+    return read_shortcut_names()
+end
+
 local jp_parser = clink.argmatcher("jp")
 
-jp_parser:addarg({
-    function ()
-        return read_shortcut_names()
-    end
-})
+-- First arg: shortcut names (for "jp <name>")
+jp_parser:addarg({ shortcut_generator })
+-- Second arg: shortcut names (for "jp remove <name>")
+jp_parser:addarg({ shortcut_generator })
 jp_parser:nofiles()

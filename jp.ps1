@@ -221,22 +221,3 @@ switch ($Command) {
     {$_.ToLower() -eq "clean"} { Invoke-Clean }
     default { Invoke-Jump -Name $Command }
 }
-
-# Tab completion registration
-$scriptBlock = {
-    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
-
-    $jumplistPath = Join-Path $env:USERPROFILE ".jump_directories"
-    if (Test-Path $jumplistPath) {
-        Get-Content $jumplistPath | ForEach-Object {
-            if ($_ -match '^(.+?)=') {
-                $shortcutName = $matches[1]
-                if ($shortcutName -like "$wordToComplete*") {
-                    [System.Management.Automation.CompletionResult]::new($shortcutName, $shortcutName, 'ParameterValue', $shortcutName)
-                }
-            }
-        }
-    }
-}
-
-Register-ArgumentCompleter -CommandName jp -ParameterName Command -ScriptBlock $scriptBlock

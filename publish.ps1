@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-    Publish JP Directory Jumper - GitHub Release, Scoop, and WinGet.
+    Publish JP Directory Jumper - GitHub Release and Scoop.
 .DESCRIPTION
-    Builds a release zip, creates a GitHub release, and generates
-    Scoop/WinGet manifests. Requires: gh CLI (GitHub), git.
+    Builds a release zip, creates a GitHub release via git tag + push,
+    and publishes to Scoop bucket. Requires: git (with SSH).
 .PARAMETER Target
-    Where to publish: github, scoop, winget, or all.
+    Where to publish: github, scoop, or all.
 .PARAMETER Version
     Override version (e.g., "1.2.0"). If omitted, reads from version.txt.
 .PARAMETER BumpType
@@ -15,12 +15,12 @@
 .EXAMPLE
     .\publish.ps1 -Target all -BumpType patch
     .\publish.ps1 -Target github -Version 2.0.0
-    .\publish.ps1 -Target scoop -DryRun
+    .\publish.ps1 -Target all -DryRun
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet("github", "scoop", "winget", "all")]
+    [ValidateSet("github", "scoop", "all")]
     [string]$Target,
 
     [string]$Version,
@@ -80,10 +80,10 @@ function Build-ReleaseZip {
     New-Item -ItemType Directory -Path $stagingDir -Force | Out-Null
 
     $files = @(
-        "jp.bat", "jp.ps1", "jp_clink.lua",
+        "jp.bat", "jp.ps1", "jp-completion.ps1", "jp_clink.lua",
         "install.bat", "install-powershell.bat", "uninstall.bat",
         "install-remote.bat", "cmd_shortcuts.bat",
-        "README.md", "QUICKSTART.md", "LICENSE.txt", "version.txt"
+        "README.md", "QUICKSTART.md", "LICENSE.txt", "NOTICE", "version.txt"
     )
 
     foreach ($f in $files) {
@@ -115,28 +115,45 @@ function Publish-GitHub {
     $tag = "v$Ver"
     Write-Host "`n[GitHub] Creating release $tag..." -ForegroundColor Cyan
 
-    # Build release notes from CHANGELOG
-    $changelogPath = Join-Path $ScriptDir "CHANGELOG.md"
-    $notes = "Release $tag"
-    if (Test-Path $changelogPath) {
-        $content = Get-Content $changelogPath -Raw
-        if ($content -match "(?s)## \[$([regex]::Escape($Ver))\].*?(?=\n## \[|---|\z)") {
-            $notes = $Matches[0].Trim()
-        }
-    }
-
     if ($DryRun) {
-        Write-Host "  [DRY RUN] Would create release $tag with asset $ZipPath" -ForegroundColor Yellow
+        Write-Host "  [DRY RUN] Would create tag $tag and push to origin" -ForegroundColor Yellow
+        Write-Host "  [DRY RUN] Would open GitHub release page for upload" -ForegroundColor Yellow
         return
     }
 
-    $notesFile = Join-Path $DistDir "release-notes.md"
-    $notes | Set-Content $notesFile
+    # Create git tag
+    $existingTag = git -C $ScriptDir tag -l $tag 2>&1
+    if ($existingTag) {
+        Write-Host "  Tag $tag already exists, skipping tag creation" -ForegroundColor Yellow
+    } else {
+        git -C $ScriptDir tag -a $tag -m "Release $tag"
+        Write-Host "  Created tag: $tag" -ForegroundColor Green
+    }
 
-    gh release create $tag $ZipPath --repo $Repo --title "JP $tag" --notes-file $notesFile
+    # Push tag to origin (triggers SSH passphrase prompt)
+    Write-Host "  Pushing tag to origin (you may be prompted for SSH passphrase)..." -ForegroundColor White
+    git -C $ScriptDir push origin $tag
+    Write-Host "  Pushed tag: $tag" -ForegroundColor Green
 
-    Remove-Item $notesFile -ErrorAction SilentlyContinue
-    Write-Host "  Published: https://github.com/$Repo/releases/tag/$tag" -ForegroundColor Green
+    # Open GitHub release creation page in browser
+    $releaseUrl = "https://github.com/$Repo/releases/new?tag=$tag&title=JP+$tag"
+    Write-Host ""
+    Write-Host "  Opening GitHub release page in your browser..." -ForegroundColor Cyan
+    Write-Host "  Attach this zip: $ZipPath" -ForegroundColor Yellow
+    Start-Process $releaseUrl
+
+    # Copy release notes to clipboard if available
+    $changelogPath = Join-Path $ScriptDir "CHANGELOG.md"
+    if (Test-Path $changelogPath) {
+        $content = Get-Content $changelogPath -Raw
+        if ($content -match "(?s)## \[$([regex]::Escape($Ver))\].*?(?=\n## \[|---|\z)") {
+            $Matches[0].Trim() | Set-Clipboard
+            Write-Host "  Release notes copied to clipboard - paste into description!" -ForegroundColor Green
+        }
+    }
+
+    Write-Host ""
+    Write-Host "  Release URL: https://github.com/$Repo/releases/tag/$tag" -ForegroundColor Green
 }
 
 # --- Publish: Scoop ---
@@ -153,7 +170,7 @@ function Publish-Scoop {
         version = $Ver
         description = "Lightweight directory jumper for Windows CMD and PowerShell"
         homepage = "https://github.com/$Repo"
-        license = "MIT"
+        license = "Apache-2.0"
         url = $url
         hash = $hash
         extract_dir = "jp-$Ver"
@@ -181,100 +198,37 @@ function Publish-Scoop {
     $manifest | ConvertTo-Json -Depth 5 | Set-Content $manifestPath -Encoding UTF8
     Write-Host "  Generated: $manifestPath" -ForegroundColor Green
     Write-Host "  Hash: $hash" -ForegroundColor DarkGray
+
+    # Push manifest to scoop bucket repo
+    $bucketRepo = "git@github.com:${Repo}-scoop-bucket.git"
+    $bucketDir = Join-Path $DistDir "scoop-bucket"
+
     Write-Host ""
-    Write-Host "  Next steps for Scoop:" -ForegroundColor Yellow
-    Write-Host "    1. Create a GitHub repo: $Repo-scoop-bucket" -ForegroundColor White
-    Write-Host "    2. Copy dist/jp.json into that repo as bucket/jp.json" -ForegroundColor White
-    Write-Host "    3. Users install with:" -ForegroundColor White
-    Write-Host "         scoop bucket add jp https://github.com/$Repo-scoop-bucket" -ForegroundColor Gray
-    Write-Host "         scoop install jp" -ForegroundColor Gray
-}
+    Write-Host "  Pushing manifest to scoop bucket..." -ForegroundColor Cyan
 
-# --- Publish: WinGet ---
-
-function Publish-WinGet {
-    param([string]$Ver, [string]$ZipPath)
-
-    Write-Host "`n[WinGet] Generating manifest..." -ForegroundColor Cyan
-
-    $hash = Get-FileHash256 -FilePath $ZipPath
-    $url = "https://github.com/$Repo/releases/download/v$Ver/jp-$Ver.zip"
-
-    $wingetDir = Join-Path $DistDir "winget"
-    if (-not (Test-Path $wingetDir)) { New-Item -ItemType Directory -Path $wingetDir -Force | Out-Null }
-
-    # Version manifest
-    $versionYaml = @"
-PackageIdentifier: doubleapp.jp
-PackageVersion: $Ver
-DefaultLocale: en-US
-ManifestType: version
-ManifestVersion: 1.6.0
-"@
-
-    # Locale manifest
-    $localeYaml = @"
-PackageIdentifier: doubleapp.jp
-PackageVersion: $Ver
-PackageLocale: en-US
-Publisher: doubleapp
-PublisherUrl: https://github.com/$Repo
-PackageName: JP Directory Jumper
-PackageUrl: https://github.com/$Repo
-License: MIT
-LicenseUrl: https://github.com/$Repo/blob/main/LICENSE.txt
-ShortDescription: Lightweight directory jumper for Windows CMD and PowerShell
-Description: |-
-  JP is a lightweight, fast directory navigation tool for Windows.
-  Save directories with short names and jump to them instantly.
-  Supports CMD (batch), PowerShell with tab completion, and cross-drive navigation.
-Tags:
-  - cli
-  - directory
-  - navigation
-  - productivity
-  - windows
-ManifestType: defaultLocale
-ManifestVersion: 1.6.0
-"@
-
-    # Installer manifest
-    $installerYaml = @"
-PackageIdentifier: doubleapp.jp
-PackageVersion: $Ver
-InstallerType: zip
-NestedInstallerType: portable
-NestedInstallerFiles:
-  - RelativeFilePath: jp-$Ver\jp.bat
-    PortableCommandAlias: jp
-Installers:
-  - Architecture: neutral
-    InstallerUrl: $url
-    InstallerSha256: $($hash.ToUpper())
-ManifestType: installer
-ManifestVersion: 1.6.0
-"@
-
-    if ($DryRun) {
-        Write-Host "  [DRY RUN] Would write WinGet manifests to $wingetDir" -ForegroundColor Yellow
-        Write-Host "`n--- version ---`n$versionYaml"
-        Write-Host "`n--- locale ---`n$localeYaml"
-        Write-Host "`n--- installer ---`n$installerYaml"
-        return
+    if (Test-Path $bucketDir) {
+        git -C $bucketDir pull --rebase origin main 2>&1 | Out-Null
+    } else {
+        git clone $bucketRepo $bucketDir
     }
 
-    $versionYaml | Set-Content (Join-Path $wingetDir "doubleapp.jp.yaml") -Encoding UTF8
-    $localeYaml | Set-Content (Join-Path $wingetDir "doubleapp.jp.locale.en-US.yaml") -Encoding UTF8
-    $installerYaml | Set-Content (Join-Path $wingetDir "doubleapp.jp.installer.yaml") -Encoding UTF8
+    # Scoop expects manifests at the repo root (bucket/ is optional)
+    Copy-Item $manifestPath (Join-Path $bucketDir "jp.json") -Force
 
-    Write-Host "  Generated manifests in: $wingetDir" -ForegroundColor Green
-    Write-Host "  Hash: $hash" -ForegroundColor DarkGray
+    git -C $bucketDir add jp.json
+    git -C $bucketDir diff --cached --quiet 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        git -C $bucketDir commit -m "Update jp to $Ver"
+        git -C $bucketDir push origin main
+        Write-Host "  Pushed jp.json (v$Ver) to scoop bucket" -ForegroundColor Green
+    } else {
+        Write-Host "  Scoop bucket already up to date" -ForegroundColor Yellow
+    }
+
     Write-Host ""
-    Write-Host "  Next steps for WinGet:" -ForegroundColor Yellow
-    Write-Host "    1. Fork https://github.com/microsoft/winget-pkgs" -ForegroundColor White
-    Write-Host "    2. Copy manifests to: manifests/d/doubleapp/jp/$Ver/" -ForegroundColor White
-    Write-Host "    3. Submit a pull request" -ForegroundColor White
-    Write-Host "    Or use: wingetcreate submit $wingetDir" -ForegroundColor Gray
+    Write-Host "  Users install with:" -ForegroundColor White
+    Write-Host "    scoop bucket add jp https://github.com/${Repo}-scoop-bucket" -ForegroundColor Gray
+    Write-Host "    scoop install jp" -ForegroundColor Gray
 }
 
 # --- Main ---
@@ -303,13 +257,12 @@ Write-Host "`n[Build] Packaging release zip..." -ForegroundColor Cyan
 $zipPath = Build-ReleaseZip -Ver $resolvedVersion
 
 # Publish to selected targets
-$targets = if ($Target -eq "all") { @("github", "scoop", "winget") } else { @($Target) }
+$targets = if ($Target -eq "all") { @("github", "scoop") } else { @($Target) }
 
 foreach ($t in $targets) {
     switch ($t) {
         "github" { Publish-GitHub -Ver $resolvedVersion -ZipPath $zipPath }
         "scoop"  { Publish-Scoop  -Ver $resolvedVersion -ZipPath $zipPath }
-        "winget" { Publish-WinGet -Ver $resolvedVersion -ZipPath $zipPath }
     }
 }
 
