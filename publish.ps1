@@ -204,10 +204,10 @@ function Publish-Scoop {
     $bucketDir = Join-Path $DistDir "scoop-bucket"
 
     Write-Host ""
-    Write-Host "  Pushing manifest to scoop bucket..." -ForegroundColor Cyan
+    Write-Host "  Pushing manifest to scoop bucket (you may be prompted for SSH passphrase)..." -ForegroundColor Cyan
 
     if (Test-Path $bucketDir) {
-        git -C $bucketDir pull --rebase origin main 2>&1 | Out-Null
+        git -C $bucketDir pull --rebase origin main
     } else {
         git clone $bucketRepo $bucketDir
     }
