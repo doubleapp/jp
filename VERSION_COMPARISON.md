@@ -8,7 +8,7 @@ JP comes in two versions: **Batch** and **PowerShell**. Choose based on your nee
 |---------|----------------|---------------------|
 | **Tab Completion** | ✅ Yes (via [Clink](https://github.com/chrisant996/clink)) | ✅ **Yes!** (built-in) |
 | **Speed** | ⚡⚡⚡ Very Fast | ⚡⚡ Fast |
-| **Works in CMD** | ✅ Yes | ✅ Yes (via jp.cmd wrapper) |
+| **Works in CMD** | ✅ Yes | ✅ Yes (CMD uses the native jp.bat shim; a `powershell -File` wrapper canNOT persist `cd`) |
 | **Works in PowerShell** | ✅ Yes | ✅ Yes |
 | **Startup Time** | Instant | ~100-200ms |
 | **Color Output** | Limited | ✅ Full color |

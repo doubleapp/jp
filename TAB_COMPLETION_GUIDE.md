@@ -169,8 +169,10 @@ install.bat
 ### Use Both!
 
 You can install both versions and use whichever you prefer:
-- `jp.bat` - Batch version
-- `jp.ps1` / `jp.cmd` - PowerShell version with tab completion
+- `jp.bat` - Batch version (used directly in CMD; `cd` persists because it runs in the parent shell)
+- `jp.ps1` + `jp-completion.ps1` - PowerShell version with tab completion (the profile `jp` function dot-sources jp.ps1 so `cd` persists)
+
+> **Note:** `jp.cmd` is only a thin shim that forwards to the native `jp.bat`. The PowerShell script (`jp.ps1`) must NOT be invoked from CMD via `powershell -File` — that runs in a child process and cannot change the parent CMD's directory.
 
 ## Configuration
 
@@ -398,7 +400,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 |---------|---------------|---------------|---------------------|
 | Tab completion | ❌ | ✅ | ✅ |
 | Speed | ⚡⚡⚡ Fast | ⚡⚡⚡ Fast | ⚡⚡ Medium |
-| Works in CMD | ✅ | ✅ | ✅ (via jp.cmd) |
+| Works in CMD | ✅ | ✅ | ✅ (CMD runs native jp.bat, not jp.ps1) |
 | Works in PowerShell | ✅ | ✅ | ✅ |
 | Color output | Limited | Limited | ✅ Full color |
 | Error messages | Basic | Basic | Detailed |
